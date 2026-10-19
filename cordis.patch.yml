@@ -1,0 +1,3 @@
+- insert:
+    - id: jojo-adam-memory
+      name: '@jojonadam/dsh-memory'
