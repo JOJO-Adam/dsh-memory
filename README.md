@@ -21,7 +21,8 @@ dsh plugin --profile desktop add link:/absolute/path/to/dsh-memory
 **方式二：从 npm**
 
 ```bash
-dsh plugin --profile desktop add @jojonadam/dsh-memory
+dsh plugin --profile web add @jojonadam/dsh-memory        # Web 版
+dsh plugin --profile desktop add @jojonadam/dsh-memory    # 桌面版
 ```
 
 **方式三：只用技能（不装包）**
