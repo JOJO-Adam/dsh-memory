@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "DSH Memory Hub",
+    "description": "Three-layer memory hub for DeepSeek Harness: global, project and persona memory. Local-first, zero egress."
+  }
+}

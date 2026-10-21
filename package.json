@@ -1,13 +1,14 @@
 {
   "name": "@jojonadam/dsh-memory",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Three-layer memory for DeepSeek Harness: global profile memory, project anti-drift memory, and optional Stemem persona runtime. 三层记忆中枢 · 本地优先 · 零出站。",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
   },
   "files": [
     "lib",
@@ -15,7 +16,8 @@
     "cordis.patch.yml",
     "icon.svg",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "locale"
   ],
   "keywords": [
     "dsh-plugin",
@@ -50,5 +52,6 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
-  }
+  },
+  "icon": "icon.svg"
 }
