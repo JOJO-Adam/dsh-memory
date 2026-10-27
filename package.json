@@ -1,6 +1,6 @@
 {
   "name": "@jojonadam/dsh-memory",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Three-layer memory for DeepSeek Harness with native memory tools, Cordis hooks, subagent briefs, memory metrics and mechanical L3→L2 archiving. 本地优先 · 零出站。",
   "type": "module",
   "main": "lib/index.js",

@@ -52,6 +52,8 @@ process.chdir(project)
 
 const signal = new AbortController().signal
 const call = (name, args) => tools.get(name).execute(args, { signal })
+const callIn = (name, args, cwd) =>
+  tools.get(name).execute(args, { signal, agent: { session: { header: { cwd } } } })
 
 try {
   const written = await call('memory_write', {
@@ -71,6 +73,14 @@ try {
 
   const globalRead = await call('memory_read', { scope: 'global' })
   assert.match(globalRead.text, /全局偏好中文/)
+
+  // A subagent/tool exec with its own cwd must read that project, not process.cwd().
+  const otherProject = join(root, 'other')
+  mkdirSync(join(otherProject, '.dsh', 'memory'), { recursive: true })
+  writeFileSync(join(otherProject, '.dsh', 'memory', 'MEMORY.md'), '# Other\n\n- other-project-only\n')
+  const otherRead = await callIn('memory_read', {}, otherProject)
+  assert.match(otherRead.text, /other-project-only/)
+  assert.doesNotMatch(otherRead.text, /用户偏好结论先行/)
 
   const found = await call('memory_search', { query: '结论先行', scope: 'project' })
   assert.ok(found.count >= 1)
