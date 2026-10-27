@@ -79,7 +79,7 @@ try {
   assert.ok(!(second.content ?? []).some((x) => x.text.includes('【记忆路由】')), 'route hint should dedup')
 
   // Bash guard: agent/created establishes the snapshot; a later change is reported.
-  handlers.get('agent/created')({ agent, source: 'test' })
+  await handlers.get('agent/created')({ agent, source: 'test' })
   writeFileSync(
     join(memoryDir, 'MEMORY.md'),
     readFileSync(join(memoryDir, 'MEMORY.md'), 'utf8') + '\n- [2026-01-01] bash 新增（来源：bash；范围：project）\n',
@@ -106,7 +106,7 @@ try {
     Array.from({ length: 200 }, (_, i) => `- line ${i + 1}（来源：seed；范围：project）`).join('\n') + '\n',
   )
   const budgetAgent = { id: 'session-2', cwd: budgetProject }
-  handlers.get('agent/created')({ agent: budgetAgent, source: 'test' })
+  await handlers.get('agent/created')({ agent: budgetAgent, source: 'test' })
   writeFileSync(join(budgetMem, 'MEMORY.md'), readFileSync(join(budgetMem, 'MEMORY.md'), 'utf8') + '- one too many\n')
   const budget = await runPost({ name: 'bash', arguments: { command: 'echo' }, agent: budgetAgent })
   assert.ok(budget.content.some((x) => x.text.includes('预算：')), 'bash budget warning missing')
@@ -165,13 +165,18 @@ try {
   assert.match(subSection.text, /已脱敏/)
   assert.equal(getHookMetrics().subagentBriefs >= 1, true)
 
+  // Bash guard must also use the subagent's effective workingDirectory.
+  writeFileSync(join(subProject, '.dsh', 'memory', 'MEMORY.md'), readFileSync(join(subProject, '.dsh', 'memory', 'MEMORY.md'), 'utf8') + 'sub-bash-change\n')
+  const subBash = await runPost({ name: 'bash', arguments: { command: 'echo' }, agent: subAgent })
+  assert.ok(subBash.content.some((x) => x.text.includes('【记忆写入】')), 'subagent bash guard missing')
+
   let leadSection = null
   const leadAgent = {
     id: 'lead-1',
     session: { header: { cwd: project } },
     ctx: { systemPrompt: { section(value) { leadSection = value } } },
   }
-  handlers.get('agent/created')({ agent: leadAgent, source: 'test' })
+  await handlers.get('agent/created')({ agent: leadAgent, source: 'test' })
   assert.equal(leadSection, null, 'lead should not get subagent brief')
 
   const metrics = getHookMetrics()
