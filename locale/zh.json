@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "DSH 记忆中枢",
-    "description": "DSH 三层记忆中枢：全局 / 项目 / 人格记忆，含 memory_read/search/write/health 原生工具。"
+    "description": "DSH 三层记忆中枢：原生 memory tools + Cordis hooks（路由提示 / Bash 守卫 / 会话摘要）。"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@jojonadam/dsh-memory",
-  "version": "0.2.0",
-  "description": "Three-layer memory for DeepSeek Harness with native memory_read/search/write/health tools: global profile memory, project anti-drift memory, and optional Stemem persona runtime. 本地优先 · 零出站。",
+  "version": "0.3.0",
+  "description": "Three-layer memory for DeepSeek Harness with native memory tools and Cordis hooks: global profile memory, project anti-drift memory, and optional Stemem persona runtime. 本地优先 · 零出站。",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -55,6 +55,6 @@
   },
   "icon": "icon.svg",
   "scripts": {
-    "test": "node test/provider.test.mjs && node test/tools.test.mjs"
+    "test": "node test/provider.test.mjs && node test/tools.test.mjs && node test/hooks.test.mjs"
   }
 }

@@ -23,7 +23,7 @@ AI 协作的记忆有三件事要管：**跨项目的你是谁**、**单个项�
 - `memory_write`：追加一条原子记忆，**source 必填**，拒绝明文凭据 / 越界 / 超预算；
 - `memory_health`：只读体检（预算 / 凭据 / 重复 / 缺来源）。
 
-正常写入走 `memory_write`；Bash 旁路写入是 v0.3 hook 的兜底范围，本版未做。
+正常写入走 `memory_write`；v0.3 已接 Cordis hooks：Bash 变更守卫、`tools/post-execute` 路由提示（读后）、`agent/turn-stopping` 当日摘要。路由提示按 `.dsh/memory/routes.tsv` 的 glob 匹配，没有表就静默。
 
 ## 1. 何时调用
 
