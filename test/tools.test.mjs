@@ -82,6 +82,14 @@ try {
   assert.match(otherRead.text, /other-project-only/)
   assert.doesNotMatch(otherRead.text, /用户偏好结论先行/)
 
+  // Even when process.cwd() has no project memory, an exec cwd's project is the default.
+  const noProjectCwd = join(root, 'no-project-cwd')
+  mkdirSync(noProjectCwd, { recursive: true })
+  process.chdir(noProjectCwd)
+  const otherDefault = await callIn('memory_read', {}, otherProject)
+  assert.match(otherDefault.text, /other-project-only/)
+  process.chdir(project)
+
   const found = await call('memory_search', { query: '结论先行', scope: 'project' })
   assert.ok(found.count >= 1)
   assert.match(found.text, /project\/MEMORY\.md:\d+/)
