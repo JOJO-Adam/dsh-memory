@@ -14,16 +14,19 @@ license: MIT
 
 AI 协作的记忆有三件事要管：**跨项目的你是谁**、**单个项目别漂**、**角色的人格与记忆**。本 Skill 是这三层的统一入口——先体检，再按层路由，不重复造轮子。
 
-## 0.1 原生工具（v0.2 起）
+## 0.1 原生工具（v0.2 起，v0.4 补 metrics）
 
-本插件已注册四个 model-facing 工具，**优先用工具，不要用通用 read/write 手改记忆**：
+本插件已注册五个 model-facing 工具，**优先用工具，不要用通用 read/write 手改记忆**：
 
 - `memory_read`：读项目 / 全局记忆文件，路径围栏；
 - `memory_search`：按关键词搜，回答「上次 / 之前 / 决定」前先搜；
 - `memory_write`：追加一条原子记忆，**source 必填**，拒绝明文凭据 / 越界 / 超预算；
-- `memory_health`：只读体检（预算 / 凭据 / 重复 / 缺来源）。
+- `memory_health`：只读体检（预算 / 凭据 / 重复 / 缺来源）；
+- `memory_metrics`：只读指标（文件 / 字节 / 索引行 / 条目 / 凭据文件 / hook 计数）。
 
 正常写入走 `memory_write`；v0.3 已接 Cordis hooks：Bash 变更守卫、`tools/post-execute` 路由提示（读后）、`agent/turn-stopping` 当日摘要。路由提示按 `.dsh/memory/routes.tsv` 的 glob 匹配，没有表就静默。
+
+v0.4 起，子代理（`session.header.origin=subagent`）会在 `agent/created` 收到一份只读的项目/全局 `MEMORY.md` brief（脱敏、截断 2000 字符）；主理人不注入，避免双份。
 
 ## 1. 何时调用
 

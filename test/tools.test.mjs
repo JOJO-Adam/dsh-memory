@@ -28,6 +28,7 @@ const ctx = {
 apply(ctx)
 assert.deepEqual([...tools.keys()].sort(), [
   'memory_health',
+  'memory_metrics',
   'memory_read',
   'memory_search',
   'memory_write',
@@ -76,6 +77,10 @@ try {
 
   const health = await call('memory_health', { scope: 'project' })
   assert.match(health.text, /记忆体检/)
+
+  const metrics = await call('memory_metrics', { scope: 'project' })
+  assert.match(metrics.text, /记忆指标/)
+  assert.match(metrics.text, /hooks: route=/)
 
   assert.throws(
     () => call('memory_write', {
@@ -126,7 +131,7 @@ try {
   )
   process.chdir(project)
 
-  console.log(`ok — ${tools.size} tools, write/read/search/health + fences + budget`)
+  console.log(`ok — ${tools.size} tools, write/read/search/health/metrics + fences + budget`)
 } finally {
   process.chdir(oldCwd)
   if (oldHome === undefined) delete process.env.DSH_MEMORY_HOME

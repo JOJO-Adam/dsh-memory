@@ -7,6 +7,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply } from '../lib/index.js'
+import { getHookMetrics } from '../lib/memory/metrics.js'
 
 const handlers = new Map()
 const ctx = {
@@ -138,7 +139,38 @@ try {
   assert.equal((text.match(/dsh-memory-digest:start/g) ?? []).length, 1, 'digest must stay one block')
   assert.match(text, /手写：原有内容/)
 
-  console.log('ok — route hint + dedup, Bash guard, digest idempotence')
+  // Subagent brief: only subagents get a read-only project/global brief.
+  let subSection = null
+  const subAgent = {
+    id: 'sub-1',
+    options: { subagentDepth: 1 },
+    session: { header: { origin: 'subagent', cwd: project } },
+    ctx: { systemPrompt: { section(value) { subSection = value } } },
+  }
+  handlers.get('agent/created')({ agent: subAgent, source: 'test' })
+  assert.ok(subSection, 'subagent brief section missing')
+  assert.match(subSection.text, /Subagent memory brief/)
+  assert.match(subSection.text, /原有条目/)
+  assert.ok(!subSection.text.includes('sk-aaaaaaaaaaaaaaaa'), 'subagent brief must not leak secrets')
+  assert.match(subSection.text, /已脱敏/)
+  assert.equal(getHookMetrics().subagentBriefs >= 1, true)
+
+  let leadSection = null
+  const leadAgent = {
+    id: 'lead-1',
+    session: { header: { cwd: project } },
+    ctx: { systemPrompt: { section(value) { leadSection = value } } },
+  }
+  handlers.get('agent/created')({ agent: leadAgent, source: 'test' })
+  assert.equal(leadSection, null, 'lead should not get subagent brief')
+
+  const metrics = getHookMetrics()
+  assert.ok(metrics.routeHints >= 1, 'route metric missing')
+  assert.ok(metrics.bashChanges >= 1, 'bash metric missing')
+  assert.ok(metrics.digests >= 1, 'digest metric missing')
+  assert.ok(metrics.subagentBriefs >= 1, 'subagent metric missing')
+
+  console.log('ok — route hint + dedup, Bash guard, digest idempotence, subagent brief, metrics')
 } finally {
   process.chdir(oldCwd)
   if (oldHome === undefined) delete process.env.DSH_MEMORY_HOME

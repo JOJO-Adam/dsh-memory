@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "DSH Memory Hub",
-    "description": "Three-layer memory hub for DeepSeek Harness with native memory tools and Cordis hooks."
+    "description": "Three-layer memory hub for DeepSeek Harness with native tools, hooks, subagent briefs and metrics."
   }
 }
