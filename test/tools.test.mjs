@@ -23,6 +23,11 @@ const ctx = {
       section = value
     },
   },
+  workingDirectory: {
+    async ensure(agent) {
+      return agent.workingDirectory || agent.session.header.cwd
+    },
+  },
 }
 
 apply(ctx)
@@ -53,7 +58,7 @@ process.chdir(project)
 const signal = new AbortController().signal
 const call = (name, args) => tools.get(name).execute(args, { signal })
 const callIn = (name, args, cwd) =>
-  tools.get(name).execute(args, { signal, agent: { session: { header: { cwd } } } })
+  tools.get(name).execute(args, { signal, agent: { workingDirectory: cwd, session: { header: { cwd } } } })
 
 try {
   const written = await call('memory_write', {
@@ -101,7 +106,7 @@ try {
   assert.match(metrics.text, /记忆指标/)
   assert.match(metrics.text, /hooks: route=/)
 
-  assert.throws(
+  await assert.rejects(
     () => call('memory_write', {
       text: `key sk-${'a'.repeat(16)}`,
       source: 'test-session',
@@ -114,7 +119,7 @@ try {
     /sk-aaaaaaaaaaaaaaaa/,
   )
 
-  assert.throws(
+  await assert.rejects(
     () => call('memory_read', { file: '../outside.md', scope: 'project' }),
     /路径越出记忆根/,
   )
@@ -144,7 +149,7 @@ try {
     Array.from({ length: 200 }, (_, i) => `- line ${i + 1}（来源：seed；范围：project）`).join('\n') + '\n',
   )
   process.chdir(fullProject)
-  assert.throws(
+  await assert.rejects(
     () => call('memory_write', { text: 'one too many', source: 'test-session', scope: 'project' }),
     /超过预算 200 行/,
   )

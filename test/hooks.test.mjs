@@ -14,6 +14,11 @@ const ctx = {
   skills: { registerProvider() {} },
   tools: { register() {} },
   systemPrompt: { section() {} },
+  workingDirectory: {
+    async ensure(agent) {
+      return agent.workingDirectory || agent.session.header.cwd
+    },
+  },
   on(event, handler) {
     handlers.set(event, handler)
   },
@@ -35,6 +40,9 @@ writeFileSync(
   join(memoryDir, 'MEMORY.md'),
   '---\ntype: memory\nmodified: 2026-01-01\n---\n\n# Project\n\n- [2026-01-01] 原有条目（来源：seed；范围：project）\n',
 )
+const subProject = join(root, 'sub-project')
+mkdirSync(join(subProject, '.dsh', 'memory'), { recursive: true })
+writeFileSync(join(subProject, '.dsh', 'memory', 'MEMORY.md'), `# Sub\n\nBRIEF_SENTINEL_7f3a: 子代理上下文已收到项目记忆。\nkey sk-${'a'.repeat(16)}\n`)
 writeFileSync(
   join(memoryDir, 'routes.tsv'),
   '触发\tglob\t路径\t摘要\n测试路由\t*.md\tMEMORY.md\t读 MEMORY\n',
@@ -121,7 +129,7 @@ try {
     type: 'assistant/message',
     data: { message: { role: 'assistant', content: [{ type: 'text', text: '结论：这是超过十个字的摘要。' }] } },
   })
-  handlers.get('agent/turn-stopping')({ agent, turn: 1, signal })
+  await handlers.get('agent/turn-stopping')({ agent, turn: 1, signal })
 
   let text = readFileSync(daily, 'utf8')
   assert.match(text, /手写：原有内容/)
@@ -134,7 +142,7 @@ try {
     type: 'user/message',
     data: { message: { role: 'user', content: [{ type: 'text', text: '第二次' }] } },
   })
-  handlers.get('agent/turn-stopping')({ agent, turn: 2, signal })
+  await handlers.get('agent/turn-stopping')({ agent, turn: 2, signal })
   text = readFileSync(daily, 'utf8')
   assert.equal((text.match(/dsh-memory-digest:start/g) ?? []).length, 1, 'digest must stay one block')
   assert.match(text, /手写：原有内容/)
@@ -144,13 +152,15 @@ try {
   const subAgent = {
     id: 'sub-1',
     options: { subagentDepth: 1 },
+    workingDirectory: subProject,
     session: { header: { origin: 'subagent', cwd: project } },
     ctx: { systemPrompt: { section(value) { subSection = value } } },
   }
-  handlers.get('agent/created')({ agent: subAgent, source: 'test' })
+  await handlers.get('agent/created')({ agent: subAgent, source: 'test' })
   assert.ok(subSection, 'subagent brief section missing')
   assert.match(subSection.text, /Subagent memory brief/)
-  assert.match(subSection.text, /原有条目/)
+  assert.match(subSection.text, /BRIEF_SENTINEL_7f3a/)
+  assert.doesNotMatch(subSection.text, /原有条目/)
   assert.ok(!subSection.text.includes('sk-aaaaaaaaaaaaaaaa'), 'subagent brief must not leak secrets')
   assert.match(subSection.text, /已脱敏/)
   assert.equal(getHookMetrics().subagentBriefs >= 1, true)
