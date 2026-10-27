@@ -1,6 +1,6 @@
 ---
 name: memory-hub
-description: "DSH 三层记忆中枢：全局（~/.dsh/memory 用户画像/偏好/决策/教训）、项目（AGENTS.md + .dsh/memory 防漂移）、人格（Stemem MCP 持久人格）。当用户说 AI 记不住、跨会话漂移、要建或修项目记忆、要接人格记忆、要做记忆体检查时使用。本地优先、零出站。By JOJO&Adam。"
+description: "DSH 三层记忆中枢：全局（~/.dsh/memory 用户画像/偏好/决策/教训）、项目（AGENTS.md + .dsh/memory 防漂移）、人格（Stemem MCP 持久人格）。当用户说 AI 记不住、跨会话漂移、要建或修项目记忆、要接人格记忆、要做记忆体检查时使用。本地优先、零出站；含 memory_read/search/write/health 原生工具。By JOJO&Adam。"
 whenToUse: "记忆 / 忘 / 漂移 / drift / 跨会话 / 项目记忆 / MEMORY.md / 人格 / persona / Stemem / 压缩失忆 / compaction 时"
 license: MIT
 ---
@@ -13,6 +13,17 @@ license: MIT
 ## 0. 一句话
 
 AI 协作的记忆有三件事要管：**跨项目的你是谁**、**单个项目别漂**、**角色的人格与记忆**。本 Skill 是这三层的统一入口——先体检，再按层路由，不重复造轮子。
+
+## 0.1 原生工具（v0.2 起）
+
+本插件已注册四个 model-facing 工具，**优先用工具，不要用通用 read/write 手改记忆**：
+
+- `memory_read`：读项目 / 全局记忆文件，路径围栏；
+- `memory_search`：按关键词搜，回答「上次 / 之前 / 决定」前先搜；
+- `memory_write`：追加一条原子记忆，**source 必填**，拒绝明文凭据 / 越界 / 超预算；
+- `memory_health`：只读体检（预算 / 凭据 / 重复 / 缺来源）。
+
+正常写入走 `memory_write`；Bash 旁路写入是 v0.3 hook 的兜底范围，本版未做。
 
 ## 1. 何时调用
 
