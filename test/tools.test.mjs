@@ -103,6 +103,15 @@ try {
   assert.match(fallbackRead.text, /全局偏好中文/)
   process.chdir(project)
 
+  // AGENTS.md without .dsh/memory → default scope still falls back to global.
+  const agentsOnly = join(root, 'agents-only')
+  mkdirSync(agentsOnly, { recursive: true })
+  writeFileSync(join(agentsOnly, 'AGENTS.md'), '# instructions\n')
+  process.chdir(agentsOnly)
+  const agentsFallback = await call('memory_read', {})
+  assert.match(agentsFallback.text, /全局偏好中文/)
+  process.chdir(project)
+
   // Budget: a 200-line MEMORY.md is at the project limit; one more line must be rejected.
   const fullProject = join(root, 'full')
   mkdirSync(join(fullProject, '.dsh', 'memory'), { recursive: true })
