@@ -10,9 +10,9 @@ DSH 的三层记忆中枢，一个包装齐：
 
 本地优先、零出站。不替代 DSH 原生记忆，只做路由、体检和接线。
 
-## v0.2–v0.4：原生工具 + hooks + 子代理 brief + 指标
+## v0.2–v0.5：原生工具 + hooks + 子代理 brief + 指标 + L3→L2
 
-v0.2 起，插件除了提供 `memory-hub` 技能，还向 DSH 注册四个**模型可直接调用**的工具：
+v0.2 起，插件除了提供 `memory-hub` 技能，还向 DSH 注册**模型可直接调用**的工具（v0.2 四个，v0.4 加 metrics，v0.5 加 distill）：
 
 | 工具 | 作用 | 关键约束 |
 |---|---|---|
@@ -21,6 +21,7 @@ v0.2 起，插件除了提供 `memory-hub` 技能，还向 DSH 注册四个**模
 | `memory_write` | 追加一条原子记忆 | **source 必填**；拒绝明文凭据；拒绝越界；索引超预算拒绝 |
 | `memory_health` | 体检：预算 / 凭据 / 重复 / 缺来源 | 只读；不自动改 |
 | `memory_metrics` | 存储指标 + hook 计数 | 只读；不输出密钥值 |
+| `memory_distill` | 旧 L3 日志机械归档到 L2 topics | 不删除 L3；`apply=true` 才写；非语义摘要 |
 
 **工具优先，hook 兜底**：正常写入走 `memory_write`，在落盘前完成路径、来源、凭据、预算校验；v0.3 再用 Cordis hooks 兜住 Bash 等旁路。
 
@@ -40,6 +41,12 @@ v0.2 起，插件除了提供 `memory-hub` 技能，还向 DSH 注册四个**模
 
 - **子代理 brief**：`agent/created` 检测 `session.header.origin === 'subagent'` / `delegationDepth` / `options.subagentDepth`；命中后给子代理注入一个**只读** system prompt 段，含项目 + 全局 `MEMORY.md`（各截断 2000 字符，落盘前脱敏）。主理人不注入，避免双份。
 - **记忆指标**：`memory_metrics` 工具输出文件数 / 字节 / 索引行 / 条目 / 凭据文件 / 缺来源 / topics / dailies，以及进程内 hook 计数（route / bash / digest / subagent）。只读，无密钥值。
+
+### v0.5：L3→L2 机械归档
+
+`memory_distill` 先 `apply=false` 预览：扫早于 `days`（默认 30）的 `YYYY-MM-DD.md`，抽出 `- [` 条目，最多 `limit` 条（默认 200）。`apply=true` 时写入 `topics/distilled-YYYY-MM.md`，用 `dsh-memory-distill` 独占行标记块，重复 apply 原地替换；**不删除 L3**。
+
+它只做**机械归档**，不做语义摘要。真正的「把旧日志提炼成一条教训」仍由 agent 用 `memory_write` 写，避免把复制说成蒸馏。
 
 路由表是可选的，放在 `.dsh/memory/routes.tsv`：
 
@@ -90,7 +97,7 @@ python3 skills/memory-hub/scripts/mem_health_scan.py --path ~/.dsh/memory/MEMORY
 ```
 lib/index.js                         bundle 入口（skill provider + tools + prompt）
 lib/memory/core.js                   路径 / 预算 / 脱敏 / 读写 / 搜索 / 体检（纯函数）
-lib/memory/tools.js                  四个 model-facing 工具定义
+lib/memory/tools.js                  六个 model-facing 工具定义
 lib/memory/hooks.js                  Cordis hooks：路由提示 / Bash 守卫 / 会话摘要 / 子代理 brief
 lib/memory/metrics.js                进程内 hook 计数
 skills/memory-hub/SKILL.md           主技能
@@ -106,7 +113,7 @@ test/hooks.test.mjs                  路由 / Bash 守卫 / digest 幂等测试
 - 不收集 PII，不外发数据。
 - 人格是计算模拟，不是真实情感。
 - 凭据只进钥匙串，记忆只存指针。
-- v0.4 **含** Bash 守卫、route hint、会话 digest、子代理 brief、只读指标；**不含** L3→L2 蒸馏、跨进程状态、记忆质量评分。
+- v0.5 **含** Bash 守卫、route hint、会话 digest、子代理 brief、只读指标、L3→L2 机械归档；**不含** LLM 语义蒸馏、跨进程状态、记忆质量评分。
 - 路由提示是**读后**的；DSH 的 `tools/pre-execute` 是决策口，不提供读前 `additionalContext`。
 - 插件依赖 DSH 的 `skills` / `tools` / `systemPrompt` 三个服务；缺任意一个不会加载。
 

@@ -27,6 +27,7 @@ const ctx = {
 
 apply(ctx)
 assert.deepEqual([...tools.keys()].sort(), [
+  'memory_distill',
   'memory_health',
   'memory_metrics',
   'memory_read',
@@ -131,7 +132,26 @@ try {
   )
   process.chdir(project)
 
-  console.log(`ok — ${tools.size} tools, write/read/search/health/metrics + fences + budget`)
+  // L3→L2: preview, apply, idempotent block, L3 preserved.
+  const oldLog = join(project, '.dsh', 'memory', '2026-01-01.md')
+  writeFileSync(oldLog, '# 2026-01-01\n\n- [2026-01-01] 旧决策：结论先行（来源：old；范围：project）\n')
+  const preview = await call('memory_distill', { days: 30, apply: false })
+  assert.match(preview.text, /L3→L2 预览/)
+  assert.ok(preview.count >= 1)
+
+  const apply = await call('memory_distill', { days: 30, apply: true })
+  assert.match(apply.text, /已写入/)
+  const topic = readFileSync(join(project, '.dsh', 'memory', 'topics', 'distilled-2026-01.md'), 'utf8')
+  assert.match(topic, /旧决策：结论先行/)
+  assert.match(topic, /机械归档/)
+  assert.equal((topic.match(/dsh-memory-distill:start/g) ?? []).length, 1)
+  assert.ok(readFileSync(oldLog, 'utf8').includes('旧决策：结论先行'))
+
+  await call('memory_distill', { days: 30, apply: true })
+  const topic2 = readFileSync(join(project, '.dsh', 'memory', 'topics', 'distilled-2026-01.md'), 'utf8')
+  assert.equal((topic2.match(/dsh-memory-distill:start/g) ?? []).length, 1, 'distill must stay one block')
+
+  console.log(`ok — ${tools.size} tools, write/read/search/health/metrics/distill + fences + budget`)
 } finally {
   process.chdir(oldCwd)
   if (oldHome === undefined) delete process.env.DSH_MEMORY_HOME
